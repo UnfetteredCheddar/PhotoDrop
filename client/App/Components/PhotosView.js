@@ -4,6 +4,7 @@ var _ = require('lodash');
 var api = require('../Utils/api');
 var IconIon = require('react-native-vector-icons/Ionicons');
 var PhotoSwiperView = require('./PhotoSwiperView');
+var StanzaSwiperView = require('./StanzaSwiperView');
 
 var {
   Navigator,
@@ -40,6 +41,10 @@ class PhotosView extends React.Component{
       userPhotosUrls: undefined,
       userFavoritesUrls: undefined,
       allViewablePhotos: undefined,
+      stanzas: undefined,
+      userStanzas: undefined,
+      userFavoriteStanzas: undefined,
+      allViewableStanzas: undefined,
       isRefreshing: false,
     };
     if(this.state.favorites) {
@@ -54,6 +59,15 @@ class PhotosView extends React.Component{
         });
         this.setState({ imageUrls: photosUrls });
         this.setState({ userPhotosUrls: photosUrls });
+      })
+      api.fetchUserFavoriteStanzas(this.state.userId, (stanzas) => {
+        var stanzasArr = JSON.parse(stanzas);
+        this.setState({ userFavoriteStanzas: stanzasArr });
+      })
+      api.fetchUserStanzas(this.state.userId, (stanzas) => {
+        var stanzasArr = JSON.parse(stanzas);
+        this.setState({ stanzas: stanzasArr });
+        this.setState({ userStanzas: stanzasArr });
       })
     } else {
       navigator.geolocation.getCurrentPosition(
@@ -71,14 +85,20 @@ class PhotosView extends React.Component{
         });
         this.setState({ imageUrls: photosUrls });
       })
+      api.fetchStanzas(this.state.latitude, this.state.longitude, 50, (stanzas) => { // need to pass in the radius (in m) from the MapView; hardcoding as 50m for now
+        var stanzasArr = JSON.parse(stanzas);
+        this.setState({ stanzas: stanzasArr });
+      })
     }
   }
 
   componentDidMount() {
     if(this.state.favorites){
       this.setState({ imageUrls: this.state.userPhotosUrls});
+      this.setState({ stanzas: this.state.userStanzas});
     } else {
       this.setState({ imageUrls: this.state.allViewablePhotos});
+      this.setState({ stanzas: this.state.allViewableStanzas});
     }
   }
 
@@ -122,6 +142,30 @@ class PhotosView extends React.Component{
     }
   }
 
+  showStanzaFullscreen(stanza, index) {
+    return () => {
+      this.setState({statusBarHidden: true});
+      this.props.navigator.push({
+        component: StanzaSwiperView,
+        index: index,
+        stanzas: this.state.stanzas,
+        // uri: uri,
+        // width: this.state.currentScreenWidth,
+        showStatusBar: this.showStatusBar.bind(this),
+        userId: this.state.userId,
+        sceneConfig: {
+          ...Navigator.SceneConfigs.FloatFromBottom,
+          gestures: {
+            pop: {
+              ...Navigator.SceneConfigs.FloatFromBottom.gestures.pop,
+              edgeHitWidth: Dimensions.get('window').height,
+            },
+          },
+        }
+      });
+    }
+  }
+
   showStatusBar() {
     this.setState({statusBarHidden: false});
   }
@@ -137,18 +181,19 @@ class PhotosView extends React.Component{
     })
   }
 
-  renderImagesInGroupsOf(count) {
-    return _.chunk(IMAGE_URLS, IMAGES_PER_ROW).map((imagesForRow) => {
+  renderStanzaRow(stanzas) {
+    return stanzas.map((stanza, index) => {
       return (
-        <View style={styles.row}>
-          {this.renderRow(imagesForRow)}
-        </View>
+        // Hardcoded key value for each element below to dismiss eror message
+        <TouchableHighlight onPress={this.showStanzaFullscreen(stanza, index)}>
+          <Text style={[styles.image, this.calculatedSize()]}>{stanza.text}</Text>
+        </TouchableHighlight>
       )
     })
   }
 
   _backButton() {
-    this.props.navigator.pop();
+    this.props.navigator.pop(); 
   }
 
   _onChange(event) {
@@ -157,8 +202,10 @@ class PhotosView extends React.Component{
     });
     if(event.nativeEvent.selectedSegmentIndex===0) {
         this.setState({ imageUrls: this.state.userPhotosUrls});
+        this.setState({ stanzas: this.state.userStanzas});
     } else if(event.nativeEvent.selectedSegmentIndex===1) {
         this.setState({ imageUrls: this.state.userFavoritesUrls});
+        this.setState({ stanzas: this.state.userFavoriteStanzas});
     }
   }
 
@@ -169,18 +216,27 @@ class PhotosView extends React.Component{
         var photosArr = JSON.parse(photos);
         this.setState({ userFavoritesUrls: photosArr });
       })
+      api.fetchUserFavoriteStanzas(this.state.userId, (stanzas) => {
+        var stanzaArr = JSON.parse(stanzas);
+        this.setState({ userFavoriteStanzas: stanzaArr });
+      })
       api.fetchUserPhotos(this.state.userId, (photos) => {
         var photosArr = JSON.parse(photos);
         var photosUrls = photosArr.map((photo) => {
           return photo.url;
         });
-        // this.setState({ imageUrls: photosUrls });
         this.setState({ userPhotosUrls: photosUrls });
+      })
+      api.fetchUserStanzas(this.state.userId, (stanzas) => {
+        var stanzaArr = JSON.parse(stanzas);
+        this.setState({ userStanzas: stanzaArr });
       })
       if(this.state.selectedIndex===0) {
         this.setState({imageUrls: this.state.userPhotosUrls});
+        this.setState({stanzas: this.state.userStanzas});
       } else if(this.state.selectedIndex===1) {
         this.setState({imageUrls: this.state.userFavoritesUrls});
+        this.setState({stanzas: this.state.userFavoriteStanzas});
       }
     } else {
       navigator.geolocation.getCurrentPosition(
@@ -198,6 +254,10 @@ class PhotosView extends React.Component{
         });
         this.setState({ imageUrls: photosUrls });
       })
+      api.fetchStanzas(this.state.latitude, this.state.longitude, 50, (stanzas) => { // need to pass in the radius (in m) from the MapView; hardcoding as 50m for now
+        var stanzaArr = JSON.parse(stanzas);
+        this.setState({ stanzas: stanzaArr });
+      })
     }
     setTimeout(() => {
       this.setState({
@@ -209,7 +269,7 @@ class PhotosView extends React.Component{
 
   render() {
     var pageTitle = (
-       this.state.favorites ? <Text style={styles.pageTitle}>Your Photos</Text> : <Text style={styles.pageTitle}>Photos Near You</Text>
+       this.state.favorites ? <Text style={styles.pageTitle}>Your Media</Text> : <Text style={styles.pageTitle}>Media Near You</Text>
     )
     var backButton = (
       <TouchableHighlight onPress={this._backButton.bind(this)} underlayColor={'white'}>
@@ -250,6 +310,7 @@ class PhotosView extends React.Component{
               />
             }>
             {this.state.imageUrls ? this.renderRow(this.state.imageUrls) : null}
+            {this.state.stanzas ? this.renderStanzaRow(this.state.stanzas) : null}
           </ScrollView>
         </View>
       ); 
@@ -277,6 +338,7 @@ class PhotosView extends React.Component{
               />
             }>
             {this.state.imageUrls ? this.renderRow(this.state.imageUrls) : null}
+            {this.state.stanzas ? this.renderStanzaRow(this.state.stanzas) : null}
           </ScrollView>
         </View>
       ); 

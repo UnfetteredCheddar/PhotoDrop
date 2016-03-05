@@ -207,7 +207,7 @@ module.exports = {
               if (!user) {
                 console.error('User was not found --- getStanzaData 2');
               } else {
-                var favorited = (user.stanzaFavorites.indexOf(req.query.id) === -1);
+                var favorited = (user.favoriteStanzas.indexOf(req.query.id) === -1);
                 res.json({ username: user.username, views: stanza.views, favorited: !favorited });
               }
             });
@@ -230,6 +230,40 @@ module.exports = {
     });
   },
 
+  fetchFavoriteStanzas: function(req, res, next) {
+    User.findOne({ _id: mongoose.mongo.ObjectID(req.query.userId) }, function(err, user) {
+      if (err) {
+        next(err);
+      }
+      if (!user) {
+        console.error('User was not found');
+      } else {
+        var counter = 0;
+        var length = user.favoriteStanzas.length;
+        var stanzas = [];
+        var sendResponse = function(stanzas) {
+          res.json(stanzas);
+        };
+        if(length === 0) {
+          res.json();
+        }
+        user.favoriteStanzas.forEach(function(stanzaId) {
+          Stanza.findOne({_id: mongoose.mongo.ObjectID(stanzaId)}, function(err, stanza) {
+            if(err) {
+              next(err);
+            } else {
+              stanzas.push(stanza);
+              counter++;
+              if(counter === length) {
+                sendResponse(stanzas);
+              }
+            }
+          });
+        });
+      }
+    });
+  },
+
   toggleStanzaFavorite: function(req, res, next) {
     var id = req.query.id;
     User.findOne({ _id: mongoose.mongo.ObjectID(req.query.userId) }, function(err, user) {
@@ -240,10 +274,10 @@ module.exports = {
       if (!user) {
         console.error('User was not found TOGGLE STANZSA FAV');
       } else {
-        if (user.stanzaFavorites.indexOf(id) === -1) {
-          user.stanzaFavorites.push(id);
+        if (user.favoriteStanzas.indexOf(id) === -1) {
+          user.favoriteStanzas.push(id);
         } else {
-          user.stanzaFavorites.splice(user.stanzaFavorites.indexOf(id), 1);
+          user.favoriteStanzas.splice(user.favoriteStanzas.indexOf(id), 1);
         }
         user.save(function(err, savedUser) {
           res.json();
