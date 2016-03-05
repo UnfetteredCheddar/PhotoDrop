@@ -186,7 +186,7 @@ class PhotosView extends React.Component{
       return (
         // Hardcoded key value for each element below to dismiss eror message
         <TouchableHighlight onPress={this.showStanzaFullscreen(stanza, index)}>
-          <Text style={[styles.image, this.calculatedSize()]}>{stanza.text}</Text>
+          <Text style={[styles.stanza, this.calculatedSize()]}>{stanza.text}</Text>
         </TouchableHighlight>
       )
     })
@@ -299,20 +299,20 @@ class PhotosView extends React.Component{
              />
            }>
             <View>
-              <Text>Photos</Text>
+              <Text style={styles.mediaTitle}>Photos</Text>
               {this.state.imageUrls ? null : <ActivityIndicatorIOS size={'large'} style={[styles.centering, {height: 550}]} />}
               {this.state.imageUrls && this.state.selectedIndex===0 && !this.state.imageUrls.length ? <Text style={styles.noPhotosText}>{`Looks like you haven't taken any photos...`}</Text>   : null}
               {this.state.imageUrls && this.state.selectedIndex===0 && !this.state.imageUrls.length ? <Text style={styles.noPhotosText2}>Swipe to the camera and drop a photo!</Text>  : null}
               {this.state.imageUrls && this.state.selectedIndex===1 && !this.state.imageUrls.length ? <Text style={styles.noPhotosText}>Looks like you have no favorite photos...</Text>   : null}
               {this.state.imageUrls && this.state.selectedIndex===1 && !this.state.imageUrls.length ? <Text style={styles.noPhotosText2}>Swipe to the map and checkout photos around you!</Text>  : null}
-              <ScrollView style={styles.rowContainer} horizontal={true}>
+              <ScrollView horizontal={true}>
                 {this.state.imageUrls ? this.renderRow(this.state.imageUrls) : null}
               </ScrollView>
             </View>
 
             <View>
-              <Text>Stanzas</Text>
-              <ScrollView style={styles.rowContainer} horizontal={true}>
+              <Text style={styles.mediaTitle}>Stanzas</Text>
+              <ScrollView horizontal={true}>
                 {this.state.stanzas ? this.renderStanzaRow(this.state.stanzas) : null}
               </ScrollView>
             </View>
@@ -332,18 +332,18 @@ class PhotosView extends React.Component{
 
 
             <View>
-              <Text>Photos</Text>
+              <Text style={styles.mediaTitle}>Photos</Text>
               {this.state.imageUrls ? null : <ActivityIndicatorIOS size={'large'} style={[styles.centering, {height: 550}]} />}
               {this.state.imageUrls && !this.state.imageUrls.length  ? <Text style={styles.noPhotosText}>Looks like there are no photos near you...</Text>   : null}
               {this.state.imageUrls && !this.state.imageUrls.length  ? <Text style={styles.noPhotosText2}>Be the first one to drop a photo!</Text>  : null}
-              <ScrollView style={styles.rowContainer} horizontal={true}>
+              <ScrollView horizontal={true}>
                 {this.state.imageUrls ? this.renderRow(this.state.imageUrls) : null}
               </ScrollView>
             </View>
 
             <View>
-              <Text>Stanzas</Text>
-              <ScrollView style={styles.rowContainer} horizontal={true}>
+              <Text style={styles.mediaTitle}>Stanzas</Text>
+              <ScrollView horizontal={true}>
                 {this.state.stanzas ? this.renderStanzaRow(this.state.stanzas) : null}
               </ScrollView>
             </View>
@@ -398,8 +398,16 @@ var styles = StyleSheet.create({
     textAlign: 'center',
     color: '#565b5c'
   },
-  rowContainer: {
-
+  stanza: {
+    borderWidth: 1,
+    borderColor: '#fff',
+    backgroundColor: '#c4e1ea',
+    padding: 5,
+  },
+  mediaTitle: {
+    fontSize: 18,
+    fontFamily: 'circular',
+    padding: 10
   }
 });
 
